@@ -17,7 +17,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
 app.app_context().push()
 
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "It's a secret")
 toolbar = DebugToolbarExtension(app)
 
@@ -181,10 +181,30 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
     form = UserEditForm()
-    if form.validate_on_submit():
-        return
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
     else:
-        return render_template('users/edit.html', form=form)    
+        if form.validate_on_submit():
+            x = g.user
+            user = User.authenticate(x.username,
+                                     form.password.data)
+            if user:
+                x.username = form.username.data or x.username
+                x.email = form.email.data or x.email
+                x.image_url = form.image_url.data or x.image_url
+                x.header_image_url = form.header_image_url.data or x.header_image_url
+                x.bio = form.bio.data or x.bio
+                try:
+                    db.session.commit()            
+                    return redirect(f"/users/{x.id}")
+                except:
+                    db.session.rollback()
+                    return redirect('/users/profile')
+            else:
+                flash("The password entered is incorrect.", "danger")    
+    return render_template('users/edit.html', form=form)  
+
 
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
