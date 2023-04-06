@@ -1,17 +1,16 @@
-"""SQLAlchemy models for Warbler."""
-
 from datetime import datetime
-
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
 
+def connect_db(app):
+    db.app = app
+    db.init_app(app)
 
 class Follows(db.Model):
     """Connection of a follower <-> followed_user."""
-
     __tablename__ = 'follows'
 
     user_being_followed_id = db.Column(
@@ -29,7 +28,6 @@ class Follows(db.Model):
 
 class Likes(db.Model):
     """Mapping user likes to warbles."""
-
     __tablename__ = 'likes' 
 
     id = db.Column(
@@ -51,7 +49,6 @@ class Likes(db.Model):
 
 class User(db.Model):
     """User in the system."""
-
     __tablename__ = 'users'
 
     id = db.Column(
@@ -133,10 +130,8 @@ class User(db.Model):
     @classmethod
     def signup(cls, username, email, password, image_url):
         """Sign up user.
-
         Hashes password and adds user to system.
         """
-
         hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
 
         user = User(
@@ -152,14 +147,11 @@ class User(db.Model):
     @classmethod
     def authenticate(cls, username, password):
         """Find user with `username` and `password`.
-
         This is a class method (call it on the class, not an individual user.)
         It searches for a user whose password hash matches this password
         and, if it finds such a user, returns that user object.
-
         If can't find matching user (or if password is wrong), returns False.
         """
-
         user = cls.query.filter_by(username=username).first()
 
         if user:
@@ -169,10 +161,8 @@ class User(db.Model):
 
         return False
 
-
 class Message(db.Model):
     """An individual message ("warble")."""
-
     __tablename__ = 'messages'
 
     id = db.Column(
@@ -198,13 +188,3 @@ class Message(db.Model):
     )
 
     user = db.relationship('User')
-
-
-def connect_db(app):
-    """Connect this database to provided Flask app.
-
-    You should call this in your Flask app.
-    """
-
-    db.app = app
-    db.init_app(app)
