@@ -47,11 +47,8 @@ def do_logout():
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
     """Handle user signup.
-
     Create new user and add to DB. Redirect to home page.
-
     If form not valid, present form.
-
     If the there already is a user with that username: flash message
     and re-present form.
     """
@@ -78,16 +75,13 @@ def signup():
 def login():
     """Handle user login."""
     form = LoginForm()
-
     if form.validate_on_submit():
         user = User.authenticate(form.username.data,
                                  form.password.data)
-
         if user:
             do_login(user)
             flash(f"Hello, {user.username}!", "success")
             return redirect("/")
-
         flash("Invalid credentials.", 'danger')
 
     return render_template('users/login.html', form=form)
@@ -108,13 +102,11 @@ def list_users():
     Can take a 'q' param in querystring to search by that username.
     """
     search = request.args.get('q')
-
     if not search:
         users = User.query.all()
     else:
         users = User.query.filter(User.username.like(f"%{search}%")).all()
     return render_template('users/index.html', users=users)
-
 
 @app.route('/users/<int:user_id>')
 def users_show(user_id):
@@ -130,7 +122,6 @@ def users_show(user_id):
                 .all())
     return render_template('users/show.html', user=user, messages=messages)
 
-
 @app.route('/users/<int:user_id>/following')
 def show_following(user_id):
     """Show list of people this user is following."""
@@ -140,7 +131,6 @@ def show_following(user_id):
     user = User.query.get_or_404(user_id)
     return render_template('users/following.html', user=user)
 
-
 @app.route('/users/<int:user_id>/followers')
 def users_followers(user_id):
     """Show list of followers of this user."""
@@ -149,7 +139,6 @@ def users_followers(user_id):
         return redirect("/")
     user = User.query.get_or_404(user_id)
     return render_template('users/followers.html', user=user)
-
 
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
 def add_follow(follow_id):
@@ -163,7 +152,6 @@ def add_follow(follow_id):
 
     return redirect(f"/users/{g.user.id}/following")
 
-
 @app.route('/users/stop-following/<int:follow_id>', methods=['POST'])
 def stop_following(follow_id):
     """Have currently-logged-in-user stop following this user."""
@@ -175,7 +163,6 @@ def stop_following(follow_id):
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
-
 
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
@@ -205,7 +192,6 @@ def profile():
                 flash("The password entered is incorrect.", "danger")    
     return render_template('users/edit.html', form=form)  
 
-
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
     """Delete user."""
@@ -218,45 +204,36 @@ def delete_user():
 
     return redirect("/signup")
 
-
 ##############################################################################
 # Messages routes:
 
 @app.route('/messages/new', methods=["GET", "POST"])
 def messages_add():
     """Add a message:
-
     Show form if GET. If valid, update message and redirect to user page.
     """
-
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
     form = MessageForm()
-
     if form.validate_on_submit():
         msg = Message(text=form.text.data)
         g.user.messages.append(msg)
         db.session.commit()
-
         return redirect(f"/users/{g.user.id}")
 
     return render_template('messages/new.html', form=form)
 
-
 @app.route('/messages/<int:message_id>', methods=["GET"])
 def messages_show(message_id):
     """Show a message."""
-
     msg = Message.query.get(message_id)
     return render_template('messages/show.html', message=msg)
-
 
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
 def messages_destroy(message_id):
     """Delete a message."""
-
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -267,19 +244,35 @@ def messages_destroy(message_id):
 
     return redirect(f"/users/{g.user.id}")
 
+##############################################################################
+# Likes routes:
+
+# @app.route(f'/users/add_like/<int:message_id>')
+# Form on Home.html replaced with div
+
+@app.route('/like/<int:message_id>/<action>')
+def like_message(message_id, action):
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    message = Message.query.get_or_404(message_id)
+    if action == "like":
+        g.user.like_message(message)
+        db.session.commit()
+    if action == "unlike":
+        g.user.unlike_message(message)
+        db.session.commit()
+    return redirect(request.referrer)
 
 ##############################################################################
 # Homepage and error pages
 
-
 @app.route('/')
 def homepage():
     """Show homepage:
-
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
-
     if g.user:
         following_ids = [u.id for u in g.user.following]
         messages = (Message
@@ -287,12 +280,9 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-
         return render_template('home.html', messages=messages)
-
     else:
         return render_template('home-anon.html')
-
 
 ##############################################################################
 # Turn off all caching in Flask
@@ -304,7 +294,6 @@ def homepage():
 @app.after_request
 def add_header(req):
     """Add non-caching headers on every request."""
-
     req.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     req.headers["Pragma"] = "no-cache"
     req.headers["Expires"] = "0"
