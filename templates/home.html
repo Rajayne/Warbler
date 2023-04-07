@@ -52,8 +52,8 @@
               <p>{{ msg.text }}</p>
             </div>
             <div id="messages-form">
-              <button class="btn btn-sm {{'btn-primary' if g.user.has_liked_message(msg) else 'btn-secondary'}}">
-                {% if g.user.has_liked_message(msg) %}
+              <button class="btn btn-sm {{'btn-primary' if g.user.liked(msg) else 'btn-secondary'}}">
+                {% if g.user.liked(msg) %}
                   <a class="like" href="{{ url_for('like_message', message_id=msg.id, action='unlike') }}"><i class="fa fa-thumbs-up"></i></a>
                 {% else %}
                   <a class="like" href="{{ url_for('like_message', message_id=msg.id, action='like') }}"><i class="fa fa-thumbs-up"></i></a>

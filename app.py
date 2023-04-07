@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Likes
 
 CURR_USER_KEY = "curr_user"
 
@@ -245,10 +245,20 @@ def messages_destroy(message_id):
     return redirect(f"/users/{g.user.id}")
 
 ##############################################################################
-# Likes routes:
+# Liked messages routes:
+
+@app.route('/users/<int:user_id>/likes')
+def show_likes(user_id):
+    """Show list of people this user is following."""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    likes = g.user.likes
+    user = User.query.get_or_404(user_id)
+    return render_template('/users/likes.html', likes=likes, user=user)
 
 # @app.route(f'/users/add_like/<int:message_id>')
-# Form on Home.html replaced with div
+# Form on home.html replaced with div
 
 @app.route('/like/<int:message_id>/<action>')
 def like_message(message_id, action):

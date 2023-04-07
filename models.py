@@ -128,17 +128,17 @@ class User(db.Model):
         return len(found_user_list) == 1
     
     def like_message(self, message):
-        if not self.has_liked_message(message):
+        if not self.liked(message):
             like = Likes(user_id=self.id, message_id=message.id)
             db.session.add(like)
 
     def unlike_message(self, message):
-        if self.has_liked_message(message):
+        if self.liked(message):
             Likes.query.filter_by(
                 user_id=self.id,
                 message_id=message.id).delete()
             
-    def has_liked_message(self, message):
+    def liked(self, message):
         return Likes.query.filter(
             Likes.user_id==self.id,
             Likes.message_id==message.id).count() > 0
